@@ -1,2 +1,2 @@
-# Production Ready Rich-Text-Editor
+# Rich-Text-Editor
 
