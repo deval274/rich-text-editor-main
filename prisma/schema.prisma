@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Document {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String   @unique
+  totalPages  Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // One-to-many relationship with document chunks/pages
+  pages       DocumentChunk[]
+}
+
+model DocumentChunk {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  documentId String   @db.ObjectId
+  pageNumber Int      // Page sequence (1, 2, 3, etc.)
+  content    String   // HTML content of this specific page
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  // Reference back to the parent document
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  // Compound index for efficient querying
+  @@unique([documentId, pageNumber])
+}
