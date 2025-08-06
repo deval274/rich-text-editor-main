@@ -9,6 +9,7 @@ type RichTextEditorProps = {
   onPageOverflow: (overflowContent: string) => void;
   initialContent?: string;
   pageIndex: number;
+  isReadOnly?: boolean;
 };
 
 const PAGE_WIDTH = 816;
@@ -21,6 +22,7 @@ export default function RichTextEditor({
   onPageOverflow,
   initialContent = "",
   pageIndex,
+  isReadOnly = false,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null); // Reference to the editor container
   const lastContentRef = useRef<string>(""); // Reference to the last content
@@ -28,14 +30,20 @@ export default function RichTextEditor({
   const editor = useEditor({
     extensions: [StarterKit, Underline],
     content: initialContent,
+    editable: !isReadOnly,
     onUpdate: ({ editor }) => {
+      if (isReadOnly) return;
       const content = editor.getHTML(); // Get the current content
       onChange(content); // Notify parent of content change
       checkForOverflow(content); 
     },
     editorProps: {
       attributes: {
-        class: "h-full w-full cursor-text focus:outline-none",
+        class: `h-full w-full focus:outline-none ${
+          isReadOnly 
+            ? "cursor-default opacity-75" 
+            : "cursor-text"
+        }`,
       },
     },
     immediatelyRender: false,
@@ -48,7 +56,14 @@ export default function RichTextEditor({
     } // Ensure the editor updates when initialContent changes
   }, [editor, initialContent, pageIndex]);
 
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!isReadOnly);
+    }
+  }, [editor, isReadOnly]);
+
   const checkForOverflow = (content: string) => {
+    if (isReadOnly) return;
     const editorElement = editorRef.current?.querySelector(".ProseMirror"); // Get the ProseMirror element
     if (!editorElement || !editor) return;
 
@@ -91,11 +106,21 @@ export default function RichTextEditor({
 
   return (
     <div className="mx-auto" style={{ width: PAGE_WIDTH }}>
-      <TextEditorMenuBar editor={editor} />
+      {!isReadOnly && <TextEditorMenuBar editor={editor} />}
+
+      {isReadOnly && (
+        <div className="mb-2 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          📖 This page is read-only because content has overflowed to subsequent pages. Only the last page can be edited.
+        </div>
+      )}
       
       {/* Page Container */}
       <div 
-        className="bg-white border border-gray-300 shadow-lg"
+        className={`bg-white border shadow-lg ${
+          isReadOnly 
+            ? "border-amber-200 bg-amber-50/30" 
+            : "border-gray-300"
+        }`}
         style={{ 
           width: PAGE_WIDTH, 
           height: PAGE_HEIGHT,
@@ -113,6 +138,9 @@ export default function RichTextEditor({
 
       <div className="mt-2 text-sm text-gray-500 text-center">
         Page {pageIndex + 1} • {PAGE_WIDTH}×{PAGE_HEIGHT}px
+        {isReadOnly && (
+          <span className="ml-2 text-amber-600">• Read Only</span>
+        )}
       </div>
     </div>
   );

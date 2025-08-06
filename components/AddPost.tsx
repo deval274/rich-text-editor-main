@@ -113,6 +113,11 @@ export default function AddDocument() {
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold">
                 Page {currentPageIndex + 1} of {pages.length}
+                {pages.length > 1 && currentPageIndex < pages.length - 1 && (
+                  <span className="ml-2 text-sm text-amber-600 font-normal">
+                    (Read Only)
+                  </span>
+                )}
               </h3>
               <Button type="button" onClick={addNewPage} variant="outline" size="sm">
                 Add Page
@@ -175,6 +180,7 @@ export default function AddDocument() {
             onPageOverflow={handlePageOverflow}
             initialContent={pages[currentPageIndex]}
             pageIndex={currentPageIndex}
+            isReadOnly={pages.length > 1 && currentPageIndex < pages.length - 1}
           />
 
           <LoadingBtn type="submit" loading={isSubmitting}>
